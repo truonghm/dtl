@@ -11,7 +11,8 @@ pip install -r requirements.txt
 
 - [X] (30%) Crawl top 250 movies data
 - [X] (40%) Crawl top 250 movies rating data
-- [ ] (50%) Crawl top 1000 movies data
+- [ ] (45%) Crawl top 1000 movies data
+- [ ] (50%) Implement sqlite database
 - [ ] (55%) Implement logging
 - [ ] (60%) Documentation for crawler
 - [ ] (85%) Analysis (notebook)
