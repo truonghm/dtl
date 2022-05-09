@@ -131,3 +131,6 @@ dmypy.json
 # data files
 cache/*.csv
 cache/*.json
+
+# notebooks
+notebooks/*.ipynb
