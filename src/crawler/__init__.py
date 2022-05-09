@@ -22,6 +22,7 @@ from src.config import Setting
 def get_soup(path_url):
     try:
         full_url = Setting.BASE_URL + path_url
+        # print(full_url)
         headers = {"User-Agent": Setting.USER_AGENT}
 
         time.sleep(Setting.INTERVAL_DELAY)
@@ -45,7 +46,8 @@ class BaseCrawler(ABC):
         pass
 
     def save_cache(self, crawler_output, file_name: Union[List, str] = None):
-        
+    
+
         if file_name is not None:
             # print(type(file_name))
             if not isinstance(file_name, list) and not isinstance(file_name, str):
@@ -134,7 +136,24 @@ class BaseBulkCrawler(BaseCrawler):
             for index, url in enumerate(self.urls):
                 if url in success_urls:
                     continue
+                
+                if type(self.stop_at) == int and self.stop_at is not None:
+                    if index >= self.stop_at:
 
+                        if len(result_list) > 0:
+                            if isinstance(result_list[0], pd.DataFrame):
+                                res = pd.concat(result_list, axis=0)
+                            elif isinstance(result_list[0], tuple):
+                                res = tuple([
+                                    pd.concat([r[i] for r in result_list], axis=0) for i in result_list[0]
+                                ])
+                            if write_to_cache:
+                                self.save_cache(res, file_name)
+
+                        # print(type(res))
+                            return res  
+                        else:
+                            return None
                 try:
                     crawler = CrawlerObject(url)
                     result = self.crawl(crawler, index, True)
@@ -144,21 +163,8 @@ class BaseBulkCrawler(BaseCrawler):
                 except Exception as e:
 
                     print(url, repr(e))
+                    raise e
                     # raise e
-
-                if type(self.stop_at) == int and self.stop_at is not None:
-                    if index >= self.stop_at:
-                        if isinstance(result_list[0], pd.DataFrame):
-                            res = pd.concat(result_list, axis=0)
-                        elif isinstance(result_list[0], tuple):
-                            res = tuple([
-                                pd.concat([r[i] for r in result_list], axis=0) for i in result_list[0]
-                            ])
-                        if write_to_cache:
-                            self.save_cache(res, file_name)
-
-                        # print(type(res))
-                        return res  
 
             retry_count += 1
 

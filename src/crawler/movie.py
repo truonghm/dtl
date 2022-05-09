@@ -21,7 +21,7 @@ class MovieCrawler(BaseCrawler):
             name=None,
             popularity=None,
             rating=None,
-            rating_url=None,
+            # rating_url=None,
             rating_count=None,
             user_review_count=None,
             critic_review_count=None,
@@ -45,8 +45,13 @@ class MovieCrawler(BaseCrawler):
             release_date=None,
         )
 
-        try:
-            self.soup = self.get_soup(path_url=path_url)
+        self.path_url = path_url
+        
+        try:    
+            if "title" in path_url:
+                self.soup = self.get_soup(path_url=path_url)
+            else:
+                self.soup = self.get_soup(path_url="/title/" + path_url)
         except Exception as e:
             self.soup = None
             print(repr(e))
@@ -152,7 +157,7 @@ class MovieCrawler(BaseCrawler):
         except ValueError:
             self.movie["rating"] = rating
 
-        self.movie["rating_url"] = rating_http[0]["href"]
+        # self.movie["rating_url"] = rating_http[0]["href"]
 
         # rating_count = get_rating_count(rating_http[0]['href'])
         # if rating_count.isnumeric():
@@ -442,7 +447,7 @@ class BulkMovieCrawler(BaseBulkCrawler):
         if movie_dict["rating_count"] is None:
             if self.movie_rating_counts[index].isnumeric():
                 movie_dict["rating_count"] = self.movie_rating_counts[index]
-        movie_dict["id"] = index
+        movie_dict["rank"] = index
         movie_dict["url"] = self.urls[index]
 
         return movie_dict

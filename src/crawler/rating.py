@@ -97,9 +97,9 @@ class BulkRatingCrawler(BaseBulkCrawler):
 
             cache = pd.read_csv(
                 Setting.CACHE + Setting.MOVIE_CACHE + ".csv",
-                usecols=["id", "rating_url"],
+                usecols=["url"],
             )
-            self.urls = list(cache["rating_url"])
+            self.urls = [url + "/ratings" for url in cache["rating_url"]]
 
         if load_from_cache:
             try:

@@ -73,28 +73,32 @@ class BaseFilmoCrawler(BaseCrawler):
                             for t in l.text.split("| ")
                         ]
                         break
-
-                row["director"] = small_text[0]
-                row["stars"] = small_text[1]
-
+                try:
+                    row["directors"] = small_text[0]
+                except:
+                    row["directors"] = None
+                try:
+                    row["stars"] = small_text[1]
+                except:
+                    row["stars"] = None
                 # print(small_text)
             except AttributeError:
                 row["director"] = None
                 row["stars"] = None
 
             try:
-                vote_count = [nv.text for nv in movie.find_all("span", {"name": "nv"})][
-                    0
-                ]
-                row["vote_count"] = int(vote_count.replace(",", ""))
+                vote_count = [nv.attrs.get("data-value", None) for nv in movie.find_all("span", {"name": "nv"})][0]
+                row["rating_count"] = int(vote_count.replace(",", ""))
             except:
-                row["vote_count"] = None
+                row["rating_count"] = None
 
             try:
-                revenue = [nv.text for nv in movie.find_all("span", {"name": "nv"})][1]
-                row["revenue"] = float(re.sub("(\$)|(.)|(M)", "", revenue)) * 10e6
-            except:
-                row["revenue"] = None
+                revenue_world = [nv.attrs.get("data-value", None) for nv in movie.find_all("span", {"name": "nv"})][1]
+                # row["revenue"] = float(re.sub("(\$)|(.)|(M)", "", revenue)) * 10e6
+                row["revenue_world"] = int(revenue_world.replace(",", ""))
+            except Exception as e:
+                # print(repr(e))
+                row["revenue_world"] = None
 
             row["url"] = self.url
 
@@ -115,7 +119,7 @@ class StarFilmoCrawler(BaseFilmoCrawler):
         self.url = url
         self.job_type = "actor"
 
-        url = url.replace("/name/", "")
+        url = re.sub("(name)|(\/)", "", url)
         full_url = f"filmosearch/?explore=title_type&role={url}&ref_=filmo_ref_job_typ&sort=num_votes,desc&mode=detail&page=1&job_type={self.job_type}&title_type=movie"
 
         self.soup = self.get_soup(full_url)
@@ -126,7 +130,7 @@ class WriterFilmoCrawler(BaseFilmoCrawler):
         self.url = url
         self.job_type = "writer"
 
-        url = url.replace("/name/", "")
+        url = re.sub("(name)|(\/)", "", url)
         full_url = f"filmosearch/?explore=title_type&role={url}&ref_=filmo_ref_job_typ&sort=num_votes,desc&mode=detail&page=1&job_type={self.job_type}&title_type=movie"
 
         self.soup = self.get_soup(full_url)
@@ -137,7 +141,7 @@ class DirectorFilmoCrawler(BaseFilmoCrawler):
         self.url = url
         self.job_type = "director"
 
-        url = url.replace("/name/", "")
+        url = re.sub("(name)|(\/)", "", url)
         full_url = f"filmosearch/?explore=title_type&role={url}&ref_=filmo_ref_job_typ&sort=num_votes,desc&mode=detail&page=1&job_type={self.job_type}&title_type=movie"
 
         self.soup = self.get_soup(full_url)
@@ -172,7 +176,7 @@ class BulkFilmoCrawler(BaseBulkCrawler):
         if load_from_cache:
             try:
                 do_load_from_cache(download_first=False)
-            except:
+            except FileNotFoundError:
                 do_load_from_cache(download_first=True)
         else:
             do_load_from_cache(download_first=True)

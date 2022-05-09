@@ -9,3 +9,4 @@ seaborn
 altair
 SQLAlchemy
 tqdm
+sqlalchemy_schemadisplay

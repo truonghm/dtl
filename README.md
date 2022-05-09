@@ -13,8 +13,9 @@ pip install -r requirements.txt
 - [X] (30%) Crawl top 250 movies rating data
 - [X] (40%) Crawl director/actor/writer pages
 - [ ] ~~(45%) Crawl top 1000 popular movies data~~
-- [ ] (50%) Implement sqlite database
-- [ ] (55%) Implement logging
+- [X] (50%) Implement sqlite database
+- [ ] (55%) Implement logging/testing/check for code coverage
 - [ ] (60%) Documentation for crawler
 - [ ] (85%) Analysis (notebook)
-- [ ] (100%) App
+- [ ] (100%) Report
+- [ ] (110%) App (streamlit?)
