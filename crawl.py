@@ -1,30 +1,54 @@
-from src.crawler.movie import BulkMovieCrawler, MovieCrawler
+from src.crawler.movie import BulkMovieCrawler, MovieCrawler, MovieListCrawler
 from src.crawler.rating import BulkRatingCrawler, RatingCrawler
-from src.crawler import write_to_cache
+from src.crawler.filmo import BulkFilmoCrawler, StarFilmoCrawler, WriterFilmoCrawler, DirectorFilmoCrawler
+from src.config import Setting
+from src.transform import transform_person
+
+# from src.crawler import write_to_cache
 import json
 import time
 import sys
 import pandas as pd
 
-def crawl_movies(stop_at:int=None):
-    crawler = BulkMovieCrawler("/chart/top")
-    movie_list = crawler.bulk_craw(MovieCrawler, stop_at=stop_at)
 
-    file_name = './cache/raw_movie_data.json'
-    with open(file_name, 'w+') as f:
-        f.write(json.dumps(movie_list, default=str))
+def crawl_movies(stop_at: int = None):
+    crawler = BulkMovieCrawler(load_from_cache=True, stop_at=stop_at)
+    res = crawler.bulk_craw(
+        MovieCrawler, write_to_cache=True, file_name=Setting.MOVIE_CACHE
+    )
+    directors_df, actors_df, writers_df, stars_df = transform_person(res)
+    directors_df.to_csv(Setting.DIRECTORS_CACHE)
+    print(Setting.DIRECTORS_CACHE)
+    actors_df.to_csv(Setting.ACTORS_CACHE)
+    print(Setting.ACTORS_CACHE)
+    writers_df.to_csv(Setting.WRITERS_CACHE)
+    print(Setting.WRITERS_CACHE)
+    stars_df.to_csv(Setting.STARS_CACHE)
+    print(Setting.STARS_CACHE)
 
-    write_to_cache(movie_list=movie_list)
+def crawl_ratings(stop_at: int = None):
+    crawler = BulkRatingCrawler(load_from_cache=True, stop_at=stop_at)
+    res = crawler.bulk_craw(
+        RatingCrawler, write_to_cache=True, file_name=[Setting.RATING_DIST_CACHE, Setting.RATING_DEMO_CACHE]
+    )
 
-def crawl_ratings(stop_at:int=None):
-    crawler = BulkRatingCrawler()
-    rating_list = crawler.bulk_craw(RatingCrawler, stop_at=stop_at)
-    
-    rating_dist = pd.concat([data[0] for data in rating_list], axis=0)
-    rating_dist.to_csv('./cache/rating_dist.csv', index=False)
+def crawl_movie_list():
+    crawler = MovieListCrawler("/chart/top")
+    res = crawler.crawl(write_to_cache=True, file_name=Setting.MOVIE_LIST_CACHE)
 
-    rating_demo = pd.concat([data[1] for data in rating_list], axis=0)
-    rating_demo.to_csv('./cache/rating_demo.csv', index=False)
+
+def crawl_actor_filmo(stop_at: int = None):
+    crawler = BulkFilmoCrawler(job_type='actor', load_from_cache=True, stop_at=stop_at)
+    res = crawler.bulk_craw(StarFilmoCrawler, write_to_cache=True, file_name=Setting.STAR_FILMO_CACHE)
+
+def crawl_director_filmo(stop_at: int = None):
+    crawler = BulkFilmoCrawler(job_type='director', load_from_cache=True, stop_at=stop_at)
+    res = crawler.bulk_craw(DirectorFilmoCrawler, write_to_cache=True, file_name=Setting.DIRECTOR_FILMO_CACHE)
+
+def crawl_writer_filmo(stop_at: int = None):
+    crawler = BulkFilmoCrawler(job_type='writer', load_from_cache=True, stop_at=stop_at)
+    res = crawler.bulk_craw(WriterFilmoCrawler, write_to_cache=True, file_name=Setting.WRITER_FILMO_CACHE)
+
 
 if __name__ == "__main__":
 
@@ -33,22 +57,49 @@ if __name__ == "__main__":
     try:
         arg = sys.argv[1]
 
-        if arg == 'movie':
+        if arg == "movie":
             crawl_movies()
 
-        elif arg == 'rating':
+        elif arg == "rating":
             crawl_ratings()
 
-        else:
+        elif arg == "movie_list":
+            crawl_movie_list()
+
+        elif arg == "actor_filmo":
+            crawl_actor_filmo()
+
+        elif arg == "director_filmo":
+            crawl_director_filmo()
+
+        elif arg == "writer_filmo":
+            crawl_writer_filmo()
+
+        elif arg == "all":
             print("Start crawling movies")
             crawl_movies()
             print("Start crawling ratings")
             crawl_ratings()
+            print("Start crawling actor filmography")
+            crawl_actor_filmo()
+            print("Start crawling director filmography")
+            crawl_director_filmo()
+            print("Start crawling writer filmography")
+            crawl_writer_filmo()
+        else:
+            raise ValueError("Invalid input")
+
     except IndexError:
-        print("Start crawling movies")
-        crawl_movies()
-        print("Start crawling ratings")
-        crawl_ratings()
+            print("Start crawling movies")
+            crawl_movies()
+            print("Start crawling ratings")
+            crawl_ratings()
+            print("Start crawling actor filmography")
+            crawl_actor_filmo()
+            print("Start crawling director filmography")
+            crawl_director_filmo()
+            print("Start crawling writer filmography")
+            crawl_writer_filmo()
 
     finally:
         print("Runtime: ", time.time() - start, "seconds")

@@ -9,40 +9,115 @@ import numpy as np
 from tqdm import tqdm
 import os
 import time
+from abc import ABC, abstractmethod
+from typing import Union, List
 
 import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.path[0])))
 
-from src.config import Setting 
+from src.config import Setting
 
-class BaseCrawler():
+
+def get_soup(path_url):
+    try:
+        full_url = Setting.BASE_URL + path_url
+        headers = {"User-Agent": Setting.USER_AGENT}
+
+        time.sleep(Setting.INTERVAL_DELAY)
+        res = requests.get(full_url, headers)
+        soup = BeautifulSoup(res.text, "html.parser")
+        return soup
+    except Exception as e:
+        raise e
+
+
+class BaseCrawler(ABC):
+    @abstractmethod
     def __init__(self):
         pass
 
     def get_soup(self, path_url):
-        try:
-            full_url = Setting.BASE_URL + path_url
-            headers = {'User-Agent': Setting.USER_AGENT}
+        return get_soup(path_url=path_url)
 
-            time.sleep(Setting.INTERVAL_DELAY)
-            res = requests.get(full_url, headers)
-            soup = BeautifulSoup(res.text, 'html.parser')
-            return soup
-        except Exception as e:
-            raise e
-
-    def crawl(self):
+    @abstractmethod
+    def crawl(self) -> pd.DataFrame:
         pass
 
-class BaseBulkCrawler(BaseCrawler):
-
-    def __init__(self, url):
-        self.soup = self.get_soup(url)
-
-        self.urls = []
-
-    def bulk_craw(self, CrawlerObject, stop_at:int=None, save_to_cache:bool=True):
+    def save_cache(self, crawler_output, file_name: Union[List, str] = None):
         
+        if file_name is not None:
+            # print(type(file_name))
+            if not isinstance(file_name, list) and not isinstance(file_name, str):
+                raise TypeError("Invalid file name type")
+
+        # print(type(crawler_output))
+        if isinstance(crawler_output, pd.DataFrame):
+            # print('df')
+            if file_name is None:
+                file_name = Setting.CACHE + self.__class__.__name__
+            elif type(file_name) == str:
+                file_name = Setting.CACHE + file_name
+            elif type(file_name) == list:
+                # file_name = [Setting.CACHE + fn for fn in file_name]
+                raise TypeError("Invalid file name type")
+            
+            file_name = f"{file_name}.csv"
+            print(file_name)
+            crawler_output.to_csv(file_name, index=False)
+        elif isinstance(crawler_output, tuple):
+            # print('list')
+            if file_name is None or type(file_name) == str:
+                if file_name is None:
+                    file_name = Setting.CACHE + self.__class__.__name__
+                elif type(file_name) == str:
+                    file_name = Setting.CACHE + file_name
+
+                for n, o in enumerate(crawler_output):
+                    if isinstance(o, pd.DataFrame):
+                        new_file_name = f"{file_name}_{n}.csv"
+                        print(new_file_name)
+                        o.to_csv(new_file_name, index=False)
+
+            elif type(file_name) == list:
+                file_name = [Setting.CACHE + fn for fn in file_name]
+                for fn, o in zip(file_name, crawler_output):
+                    if isinstance(o, pd.DataFrame):
+                        new_fn = f"{fn}.csv"
+                        print(new_fn)
+                        o.to_csv(new_fn, index=False)
+                # raise TypeError("Invalid file name type")
+
+        elif isinstance(crawler_output, (list, dict)):
+            if file_name is None:
+                file_name = Setting.CACHE + self.__class__.__name__
+            elif type(file_name) == str:
+                file_name = Setting.CACHE + file_name
+            elif type(file_name) == list:
+                # file_name = [Setting.CACHE + fn for fn in file_name]
+                raise TypeError("Invalid file name type")
+
+            file_name = f"{file_name}.json"
+            print(file_name)
+            with open(file_name, "w+") as f:
+                f.write(json.dumps(crawler_output, default=str))
+
+        else:
+            raise TypeError("Invaid crawler output")
+
+        return file_name
+
+
+class BaseBulkCrawler(BaseCrawler):
+    @abstractmethod
+    def __init__(self, url, load_from_cache: bool = True, stop_at: int = None):
+        # raise NotImplementedError
+        self.stop_at = stop_at
+
+    def bulk_craw(
+        self, CrawlerObject, write_to_cache: bool = True, file_name: str = None
+    ):
+
         result_list = []
         # fail_ids = []
         success_urls = []
@@ -52,7 +127,7 @@ class BaseBulkCrawler(BaseCrawler):
 
             if retry_count > Setting.MAX_RETRY:
                 break
-            
+
             if retry_count > 0:
                 print(f"Attempting retry number {retry_count}")
 
@@ -62,82 +137,43 @@ class BaseBulkCrawler(BaseCrawler):
 
                 try:
                     crawler = CrawlerObject(url)
-                    result = self._single_crawl(crawler, index, True)
+                    result = self.crawl(crawler, index, True)
                     result_list.append(result)
                     success_urls.append(url)
                     print(url, index)
                 except Exception as e:
 
                     print(url, repr(e))
-                    # raise e  
-                
-                if type(stop_at) == int and stop_at is not None:
-                    if index >= stop_at:
-                        return result_list
+                    # raise e
+
+                if type(self.stop_at) == int and self.stop_at is not None:
+                    if index >= self.stop_at:
+                        if isinstance(result_list[0], pd.DataFrame):
+                            res = pd.concat(result_list, axis=0)
+                        elif isinstance(result_list[0], tuple):
+                            res = tuple([
+                                pd.concat([r[i] for r in result_list], axis=0) for i in result_list[0]
+                            ])
+                        if write_to_cache:
+                            self.save_cache(res, file_name)
+
+                        # print(type(res))
+                        return res  
 
             retry_count += 1
 
-        return result_list
+        if isinstance(result_list[0], pd.DataFrame):
+            res = pd.concat(result_list, axis=0)
+        elif isinstance(result_list[0], tuple):
+            res = tuple([
+                pd.concat([r[i] for r in result_list], axis=0) for i in range(len(result_list[0]))
+            ])
+        if write_to_cache:
+            self.save_cache(res, file_name)
 
-    def _single_crawl(self, crawler, index, status:bool=True):
+        # print(type(res))
+        return res
 
-        raise NotImplementedError("This method is not implemented.")
-
-def write_to_cache(movie_list:list):
-
-    def get_stars_url(top_cast, top_cast_url, stars):
-        return [v for k,v in zip(top_cast, top_cast_url) if k in stars]
-
-    df = pd.DataFrame.from_dict(movie_list)
-
-    writers_df = pd.DataFrame({
-        "name": [item for sublist in list(df['writers']) for item in sublist], 
-        "url": [item for sublist in list(df['writers_url']) for item in sublist]
-    })
-    writers_df['url'] = writers_df['url'].str.replace("(?<=\?)(.*)|(\?)", "", regex=True)
-    writers_df.drop_duplicates(inplace=True)
-    # writers_df.set_index('url', inplace=True)
-
-    directors_df = pd.DataFrame({
-        "name": [item for sublist in list(df['directors']) for item in sublist], 
-        "url": [item for sublist in list(df['directors_url']) for item in sublist]
-    })
-    directors_df['url'] = directors_df['url'].str.replace("(?<=\?)(.*)|(\?)", "", regex=True)
-    directors_df.drop_duplicates(inplace=True)
-    # directors_df.set_index('url', inplace=True)
-
-    actors_df = pd.DataFrame({
-        "name": [item for sublist in list(df['top_cast']) for item in sublist], 
-        "url": [item for sublist in list(df['top_cast_url']) for item in sublist]
-    })
-    actors_df['url'] = actors_df['url'].str.replace("(?<=\?)(.*)|(\?)", "", regex=True)
-    actors_df.drop_duplicates(inplace=True)
-    # actors_df.set_index('url', inplace=True)
-
-    df['stars_url'] = df.apply(lambda x: get_stars_url(x.top_cast, x.top_cast_url, x.stars), axis=1)
-
-    top_cast_df = df[['id', 'top_cast_url']].explode(['top_cast_url'])
-    top_cast_df.columns = ['movie_id', 'actor_url']
-    stars_df = df[['id', 'stars_url']].explode(['stars_url'])
-    stars_df.columns = ['movie_id', 'actor_url']
-    stars_df['is_star'] = True
-    actor_movie_df = top_cast_df.merge(stars_df, how='left', on=['movie_id', 'actor_url'])
-    actor_movie_df['is_star'] = actor_movie_df['is_star'].fillna(False)
-    director_movie_df = df[['id', 'directors_url']].explode(['directors_url'])
-    writers_movie_df = df[['id', 'writers_url']].explode(['writers_url'])
-    genres_movie_df = df[['id', 'genres']].explode(['genres'])
-    country_movie_df = df[['id', 'country']].explode(['country'])
-    language_movie_df = df[['id', 'language']].explode(['language'])
-
-    df = df[['id','url','name','popularity','rating','rating_url','rating_count','user_review_count','critic_review_count','budget','revenue_usa','revenue_usa_opening','revenue_world','runtime','opening_date','release_date']]
-
-    writers_df.to_csv('./cache/writers.csv', index=False)
-    directors_df.to_csv('./cache/directors.csv', index=False)
-    actors_df.to_csv('./cache/actors.csv', index=False)
-    actor_movie_df.to_csv('./cache/actor_movie.csv', index=False)
-    director_movie_df.to_csv('./cache/director_movie.csv', index=False)
-    writers_movie_df.to_csv('./cache/writers_movie.csv', index=False)
-    genres_movie_df.to_csv('./cache/genres_movie.csv', index=False)
-    country_movie_df.to_csv('./cache/country_movie.csv', index=False)
-    language_movie_df.to_csv('./cache/language_movie.csv', index=False)
-    df.to_csv('./cache/movies.csv', index=False)
+    @abstractmethod
+    def crawl(self, crawler, index, status: bool = True):
+        pass

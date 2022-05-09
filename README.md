@@ -9,9 +9,10 @@ pip install -r requirements.txt
 
 ## To-do
 
-- [X] (30%) Crawl top 250 movies data
-- [X] (40%) Crawl top 250 movies rating data
-- [ ] (45%) Crawl top 1000 movies data
+- [X] (25%) Crawl top 250 movies data
+- [X] (30%) Crawl top 250 movies rating data
+- [X] (40%) Crawl director/actor/writer pages
+- [ ] ~~(45%) Crawl top 1000 popular movies data~~
 - [ ] (50%) Implement sqlite database
 - [ ] (55%) Implement logging
 - [ ] (60%) Documentation for crawler
