@@ -3,12 +3,12 @@ import numpy as np
 import datetime
 import ast
 import re
-import os
-import sys
+# import os
+# import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(sys.path[0])))
+# sys.path.insert(0, os.path.dirname(os.path.dirname(sys.path[0])))
 
-from src.database.executor import SQLiteDatabase
+# from src.database.executor import SQLiteDatabase
 
 
 def load_raw_data(file_path: str = None):
@@ -228,11 +228,3 @@ def transform_filmo(actor_filmo, director_filmo, writer_filmo, actors):
     writer_filmo.reset_index(drop=False, inplace=True)
     
     return actor_filmo, director_filmo, writer_filmo
-
-def fill_db(**dataframes):
-    db = SQLiteDatabase()
-    for table_name, df in dataframes.items():
-        print(table_name)
-        db.bulk_insert(df=df, table_name=table_name, if_exists="append", fill_nan=True, convert_to_str=True)
-
-    db.close()

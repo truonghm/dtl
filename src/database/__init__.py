@@ -13,7 +13,24 @@ from src.config import Setting
 
 db_path = "sqlite:///" + Setting.DATABASE
 graph_path = "./src/database/db_diagram.png"
-all_tables = ["movies", "rating_dist","rating_demo", "directors", "actors", "writers", "director_movie", "actor_movie", "writer_movie", "genre_movie", "country_movie", "language_movie"]
+all_tables = [
+    "movies",
+    "rating_dist",
+    "rating_demo",
+    "directors",
+    "actors",
+    "writers",
+    "director_movie",
+    "actor_movie",
+    "writer_movie",
+    "genre_movie",
+    "country_movie",
+    "language_movie",
+    "actor_filmo",
+    "director_filmo",
+    "writer_filmo",
+    "cpi",
+]
 
 engine = create_engine(db_path, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -22,17 +39,18 @@ Base = declarative_base()
 
 Base.metadata.create_all(engine)
 
+
 def bulk_drop(table_list):
     with engine.connect() as conn:
         for tb_name in table_list:
             conn.execute(str(f"DROP TABLE IF EXISTS [{tb_name}]"))
 
-    
+
 def generate_diagram():
     graph = create_schema_graph(
         metadata=MetaData(db_path),
         show_datatypes=True,
-        )
+    )
     graph.write_png(graph_path)
 
 

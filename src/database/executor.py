@@ -208,3 +208,11 @@ class SQLiteDatabase:
         self, dataframe: pd.DataFrame, table_name: str, if_exists: str = "replace"
     ):
         pass
+
+def fill_db(**dataframes):
+    db = SQLiteDatabase()
+    for table_name, df in dataframes.items():
+        print(table_name)
+        db.bulk_insert(df=df, table_name=table_name, if_exists="append", fill_nan=True, convert_to_str=True)
+
+    db.close()

@@ -161,3 +161,8 @@ class WriterFilmo(Base):
     rating_count = Column(Integer, default=None)
     revenue_world = Column(Integer, default=None)
     crew_url = Column(String(128), ForeignKey("writers.writer_id"), nullable=False)
+
+class CPI(Base):
+    __tablename__ = "cpi"
+    year = Column(Integer, primary_key=True)
+    avg_annual_cpi = Column(Float, nullable=False)

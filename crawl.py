@@ -6,8 +6,9 @@ from src.crawler.filmo import (
     WriterFilmoCrawler,
     DirectorFilmoCrawler,
 )
+from src.crawler.cpi import crawl_cpi
 from src.config import Setting
-from src.transform import transform_actors, transform_writers, transform_directors, transform_stars
+from src.transform.db_input import transform_actors, transform_writers, transform_directors, transform_stars
 
 # from src.crawler import write_to_cache
 import json
@@ -104,6 +105,9 @@ if __name__ == "__main__":
             crawl_actor_filmo()
             crawl_director_filmo()
             crawl_writer_filmo()
+        
+        elif arg == "cpi":
+            crawl_cpi()
 
         elif arg == "all":
             print("Start crawling movies")
@@ -116,6 +120,8 @@ if __name__ == "__main__":
             crawl_director_filmo()
             print("Start crawling writer filmography")
             crawl_writer_filmo()
+            print("Start crawling CPI data")
+            crawl_cpi()
         else:
             raise ValueError("Invalid input")
 
@@ -130,6 +136,8 @@ if __name__ == "__main__":
         crawl_director_filmo()
         print("Start crawling writer filmography")
         crawl_writer_filmo()
+        print("Start crawling CPI data")
+        crawl_cpi()
 
     finally:
         print("Runtime: ", time.time() - start, "seconds")

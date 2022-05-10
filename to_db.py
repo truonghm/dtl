@@ -1,6 +1,7 @@
 # from src.db import Database
 from src.database import Base, engine, generate_diagram, bulk_drop, all_tables
 from src.database.models import *
+from src.database.executor import fill_db
 # from src.database.executor import SQLiteDatabase
 from src.transform.db_input import *
 from src.config import Setting
@@ -41,9 +42,10 @@ if __name__ == "__main__":
     actor_filmo = load_raw_data('./cache/actor_filmo.csv')
     director_filmo = load_raw_data('./cache/director_filmo.csv')
     writer_filmo = load_raw_data('./cache/writer_filmo.csv')
-
+    
     actor_filmo, director_filmo, writer_filmo = transform_filmo(actor_filmo, director_filmo, writer_filmo, actors)
-
+    cpi = pd.read_csv("./cache/cpi.csv")
+    
     data = {
         'movies':movies_final,
         'rating_dist':rating_dist,
@@ -62,6 +64,7 @@ if __name__ == "__main__":
         'actor_filmo':actor_filmo,
         'director_filmo':director_filmo,
         'writer_filmo':writer_filmo,
+        'cpi':cpi
     }
 
     fill_db(**data)
