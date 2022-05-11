@@ -25,7 +25,7 @@ class MoviesTable(Base):
     popularity = Column(Integer, default=None)
     rating = Column(Float, default=None)
     rating_count = Column(Integer, default=None)
-    user_review_count = Column(Integer, default=None)
+    # user_review_count = Column(Integer, default=None)
     critic_review_count = Column(Integer, default=None)
     budget = Column(Float, default=None)
     revenue_usa = Column(Float, default=None)
@@ -122,12 +122,13 @@ class RatingDemoTable(Base):
 
 class ActorFilmo(Base):
     __tablename__ = "actor_filmo"
-    movie_id = Column(Integer, primary_key=True)
+    filmo_id = Column(Integer, primary_key=True)
+    movie_id = Column(String(128), nullable=False)
     name = Column(String(128), default=None)
     year = Column(Integer, default=None)
     cert = Column(String(128), default=None)
     runtime = Column(Integer, default=None)
-    genres = Column(String(128), default=None)
+    # genres = Column(String(128), default=None)
     rating = Column(Float, default=None)
     rating_count = Column(Integer, default=None)
     revenue_world = Column(Integer, default=None)
@@ -137,12 +138,13 @@ class ActorFilmo(Base):
 
 class DirectorFilmo(Base):
     __tablename__ = "director_filmo"
-    movie_id = Column(Integer, primary_key=True)
+    filmo_id = Column(Integer, primary_key=True)
+    movie_id = Column(String(128), primary_key=True)
     name = Column(String(128), default=None)
     year = Column(Integer, default=None)
     cert = Column(String(128), default=None)
     runtime = Column(Integer, default=None)
-    genres = Column(String(128), default=None)
+    # genres = Column(String(128), default=None)
     rating = Column(Float, default=None)
     rating_count = Column(Integer, default=None)
     revenue_world = Column(Integer, default=None)
@@ -151,12 +153,13 @@ class DirectorFilmo(Base):
 
 class WriterFilmo(Base):
     __tablename__ = "writer_filmo"
-    movie_id = Column(Integer, primary_key=True)
+    filmo_id = Column(Integer, primary_key=True)
+    movie_id = Column(String(128), primary_key=True)
     name = Column(String(128), default=None)
     year = Column(Integer, default=None)
     cert = Column(String(128), default=None)
     runtime = Column(Integer, default=None)
-    genres = Column(String(128), default=None)
+    # genres = Column(String(128), default=None)
     rating = Column(Float, default=None)
     rating_count = Column(Integer, default=None)
     revenue_world = Column(Integer, default=None)

@@ -23,7 +23,7 @@ class MovieCrawler(BaseCrawler):
             rating=None,
             # rating_url=None,
             rating_count=None,
-            user_review_count=None,
+            # user_review_count=None,
             critic_review_count=None,
             # metascore = None,
             directors=[],
@@ -145,17 +145,17 @@ class MovieCrawler(BaseCrawler):
         self.movie["top_cast_url"] = [
             actor["href"] for actor in self.soup.select("a.sc-11eed019-1.jFeBIw")
         ]
-        rating_http = self.soup.select(
-            "a.ipc-button ipc-button--single-padding ipc-button--center-align-content ipc-button--default-height ipc-button--core-baseAlt ipc-button--theme-baseAlt ipc-button--on-textPrimary ipc-text-button sc-f6306ea-2 dfHGIi".replace(
-                " ", "."
-            )
-        )
+        # rating_http = self.soup.select(
+        #     "a.ipc-button ipc-button--single-padding ipc-button--center-align-content ipc-button--default-height ipc-button--core-baseAlt ipc-button--theme-baseAlt ipc-button--on-textPrimary ipc-text-button sc-f6306ea-2 dfHGIi".replace(
+        #         " ", "."
+        #     )
+        # )
 
-        rating = rating_http[0].select("span.sc-7ab21ed2-1.jGRxWM")[0].text
-        try:
-            self.movie["rating"] = float(rating)
-        except ValueError:
-            self.movie["rating"] = rating
+        # rating = rating_http[0].select("span.sc-7ab21ed2-1.jGRxWM")[0].text
+        # try:
+        #     self.movie["rating"] = float(rating)
+        # except ValueError:
+        #     self.movie["rating"] = rating
 
         # self.movie["rating_url"] = rating_http[0]["href"]
 
@@ -163,15 +163,15 @@ class MovieCrawler(BaseCrawler):
         # if rating_count.isnumeric():
         #     self.movie['rating_count'] = int(rating_count)
 
-        user_review_url = self.soup.select(
-            "a.ipc-link ipc-link--baseAlt ipc-link--touch-target sc-124be030-2 eshTwQ isReview".replace(
-                " ", "."
-            )
-        )[0]["href"]
+        # user_review_url = self.soup.select(
+        #     "a.ipc-link ipc-link--baseAlt ipc-link--touch-target sc-124be030-2 eshTwQ isReview".replace(
+        #         " ", "."
+        #     )
+        # )[0]["href"]
 
-        user_review_count = self.get_review_count(user_review_url)
-        if user_review_count.isnumeric():
-            self.movie["user_review_count"] = int(user_review_count)
+        # user_review_count = self.get_review_count(user_review_url)
+        # if user_review_count.isnumeric():
+        #     self.movie["user_review_count"] = int(user_review_count)
 
         critic_review_count = (
             self.soup.select(

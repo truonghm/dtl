@@ -14,7 +14,11 @@ import re
 def load_raw_data(file_path: str = None):
     df = pd.read_csv(file_path)
     df['url'] = df['url'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
-    # df.rename(columns={'id':'rank'}, inplace=True)
+    if 'genres' in df.columns:
+        df['genres'] = df['genres'].replace(np.nan, "")
+        # df['genres'] = np.where(df['genres'].str.contains("\["), df['genres'], "[" + df['genres']+ "]")
+        df['genres'] = df['genres'].str.replace("(\[)|(\])|(\s)|(\')", "", regex=True)
+        df['genres'] = df['genres'].apply(lambda x: x.split(","))
 
     list_cols = (
         "director",
@@ -24,6 +28,7 @@ def load_raw_data(file_path: str = None):
         "top_cast",
         "writers",
         "writer",
+        "genres",
         "top_cast_url",
         "director_url",
         "directors_url",
@@ -189,7 +194,7 @@ def transform_movies(df):
             "popularity",
             "rating",
             "rating_count",
-            "user_review_count",
+            # "user_review_count",
             "critic_review_count",
             "budget",
             "revenue_usa",
@@ -202,29 +207,46 @@ def transform_movies(df):
     ]
 
 def _check_role(person:str, role:list):
-    if person.strip() in [star.strip() for star in role]:
+    if role is None or role == np.nan:
+        return False
+    elif person is None or person == np.nan:
+        return False
+    elif person.strip() in [star.strip() for star in role]:
         return True
     else:
         return False
 
 def transform_filmo(actor_filmo, director_filmo, writer_filmo, actors):
+    actor_filmo['crew_url'] = actor_filmo['url']
+    director_filmo['crew_url'] = director_filmo['url']
+    writer_filmo['crew_url'] = writer_filmo['url']
 
-    actor_filmo['actor_name'] = pd.merge(actor_filmo[['url']], actors, how='left', on = 'url')['name']
+    actor_filmo['url'] = actor_filmo['movie_id'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
+    director_filmo['url'] = director_filmo['movie_id'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
+    writer_filmo['url'] = writer_filmo['movie_id'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
+    # actor_filmo['movie_id'] = actor_filmo['movie_id'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
+    # director_filmo['movie_id'] = director_filmo['movie_id'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
+    # writer_filmo['movie_id'] = writer_filmo['movie_id'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
+
+    actor_filmo['actor_name'] = pd.merge(actor_filmo[['crew_url']], actors, how='left', left_on = 'crew_url', right_on='url')['name']
 
     actor_filmo['is_star'] = actor_filmo.apply(lambda x: _check_role(x.actor_name, x.stars), axis=1)
     # director_filmo['is_star'] = False
     # writer_filmo['is_star'] = False
 
-    cols = ['name','year','cert','runtime','genres','rating','rating_count','revenue_world','url']
+    cols = ['url','name','year','cert','runtime','genres','rating','rating_count','revenue_world','crew_url']
 
     actor_filmo = actor_filmo[cols + ['is_star']]
     actor_filmo.reset_index(drop=True, inplace=True)
     actor_filmo.reset_index(drop=False, inplace=True)
+    # actor_filmo['movie_id'] = 'ma' + actor_filmo.index.astype(str)
     director_filmo = director_filmo[cols]
     director_filmo.reset_index(drop=True, inplace=True)
     director_filmo.reset_index(drop=False, inplace=True)
+    # director_filmo['movie_id'] = 'md' + director_filmo.index.astype(str)
     writer_filmo = writer_filmo[cols]
     writer_filmo.reset_index(drop=True, inplace=True)
     writer_filmo.reset_index(drop=False, inplace=True)
+    # writer_filmo['movie_id'] = 'mw' + writer_filmo.index.astype(str)
     
     return actor_filmo, director_filmo, writer_filmo

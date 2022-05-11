@@ -12,7 +12,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(sys.path[0])))
 from src.config import Setting
 
 db_path = "sqlite:///" + Setting.DATABASE
-graph_path = "./src/database/db_diagram.png"
+# graph_path = "./src/database/db_diagram.png"
+graph_path = "./report/images/db_diagram.png"
+
 all_tables = [
     "movies",
     "rating_dist",

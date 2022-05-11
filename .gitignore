@@ -134,3 +134,6 @@ cache/*.json
 
 # notebooks
 notebooks/*.ipynb
+
+# report
+report/report_tmp.html

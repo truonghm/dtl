@@ -1,21 +1,11 @@
-# from src.db import Database
 from src.database import Base, engine, generate_diagram, bulk_drop, all_tables
 from src.database.models import *
 from src.database.executor import fill_db
-# from src.database.executor import SQLiteDatabase
 from src.transform.db_input import *
 from src.config import Setting
-# import pandas as pd
-
-# db = SQLiteDatabase()
 
 if __name__ == "__main__":
-    # df = pd.read_csv("./cache/movies.csv")
-    # df['release_date'] = pd.to_datetime(df['release_date'], format="%Y-%m-%d")
-    # df['opening_date'] = pd.to_datetime(df['opening_date'], format="%Y-%m-%d")
 
-    # db = SQLiteDatabase()
-    # db.bulk_insert(df, 'F_MOVIES', fill_nan=True, if_exists='replace')
     bulk_drop(all_tables)
     
     Base.metadata.create_all(engine)
@@ -35,15 +25,29 @@ if __name__ == "__main__":
     actor_movie = transform_actors_lookup(df)
     director_movie = transform_directors_lookup(df)
     writer_movie = transform_writers_lookup(df)
-    genre_movie = transform_genres_lookup(df)
     country_movie = transform_country_lookup(df)
     language_movie = transform_language_lookup(df)
     movies_final = transform_movies(df)
     actor_filmo = load_raw_data('./cache/actor_filmo.csv')
     director_filmo = load_raw_data('./cache/director_filmo.csv')
     writer_filmo = load_raw_data('./cache/writer_filmo.csv')
-    
+
+
     actor_filmo, director_filmo, writer_filmo = transform_filmo(actor_filmo, director_filmo, writer_filmo, actors)
+
+    genre_movie = transform_genres_lookup(
+        pd.concat([
+            actor_filmo[['url', 'genres']],
+            director_filmo[['url', 'genres']],
+            writer_filmo[['url', 'genres']],
+            df[['url', 'genres']]
+        ], axis=0).dropna()
+        ).drop_duplicates()
+
+    actor_filmo = actor_filmo.drop(columns='genres')
+    director_filmo = director_filmo.drop(columns='genres')
+    writer_filmo = writer_filmo.drop(columns='genres')
+
     cpi = pd.read_csv("./cache/cpi.csv")
     
     data = {
@@ -60,7 +64,6 @@ if __name__ == "__main__":
         'genre_movie':genre_movie,
         'country_movie':country_movie,
         'language_movie':language_movie,
-        'movies_final':movies_final,
         'actor_filmo':actor_filmo,
         'director_filmo':director_filmo,
         'writer_filmo':writer_filmo,

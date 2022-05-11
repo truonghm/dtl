@@ -2,6 +2,7 @@ numpy
 pandas
 scipy
 scikit-learn
+statsmodels
 beautifulsoup4
 matplotlib
 streamlit

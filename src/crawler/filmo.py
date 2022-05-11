@@ -10,9 +10,8 @@ from tqdm import tqdm
 import os
 import time
 
-from . import BaseCrawler, BaseBulkCrawler, Setting
+from . import BaseCrawler, BaseBulkCrawler, Setting, transform_actors, transform_directors, transform_stars, transform_writers
 from .movie import BulkMovieCrawler, MovieCrawler
-
 
 class BaseFilmoCrawler(BaseCrawler):
     def __init__(self, url: str):
@@ -24,6 +23,11 @@ class BaseFilmoCrawler(BaseCrawler):
         filmo = []
         for movie in self.soup.select("div.lister-item-content"):
             row = dict()
+            try:
+                movie_id = movie.select_one("a").attrs.get("href")
+                row['movie_id'] = movie_id
+            except AttributeError:
+                row['movie_id'] = None
             try:
                 name = movie.select_one("a").text.strip()
                 row["name"] = name

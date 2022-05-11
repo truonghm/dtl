@@ -16,6 +16,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.path[0])))
 
+from src.transform.db_input import transform_actors, transform_directors, transform_writers, transform_stars
 from src.config import Setting
 
 
