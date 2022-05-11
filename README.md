@@ -2,6 +2,11 @@
 
 For a detailed report, please see: 
 
+## Reports & Analysis
+
+- To read documentation for crawler, see [`crawler_doc.pdf`](report/crawler_doc.pdf)
+- To see analysis and summary for IMDB data, see [`analysis.ipynb`](report/analysis.ipynb)
+
 ## Installation
 
 To crawl data and reproduce the analysis, the following packages must be installed:
@@ -13,9 +18,7 @@ To crawl data and reproduce the analysis, the following packages must be install
 - statsmodels
 - beautifulsoup4
 - matplotlib
-- streamlit
 - seaborn
-- altair
 - SQLAlchemy
 - tqdm
 - sqlalchemy_schemadisplay
@@ -34,9 +37,9 @@ The code is written with Python 3.8. As such, please use the same version of Pyt
 - [X] (30%) Crawl top 250 movies rating data
 - [X] (40%) Crawl director/actor/writer pages
 - [ ] ~~(45%) Crawl top 1000 popular movies data~~
-- [ ] (45%) Implement logging/testing/check for code coverage
+- [X] (45%) Implement logging/testing/check for code coverage
 - [X] (55%) Implement sqlite database
 - [X] (60%) Documentation for crawler
 - [X] (85%) Analysis (notebook)
-- [ ] (100%) Report
+- [X] (100%) Report
 - [ ] (110%) App (streamlit?)

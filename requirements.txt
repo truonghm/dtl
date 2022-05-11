@@ -5,9 +5,7 @@ scikit-learn
 statsmodels
 beautifulsoup4
 matplotlib
-streamlit
 seaborn
-altair
 SQLAlchemy
 tqdm
 sqlalchemy_schemadisplay
