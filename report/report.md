@@ -180,7 +180,7 @@ Caches are also used as source to create database (See __Database__ section belo
 
 As with most other crawlers/scrapers, crawling data from IMDB is subjected to many types of exceptions and errors. The most common one are:
 
-- __Timeout Exception__: This usually happens when the crawler makes too many requests to the website in a short amount of time. To handle this exception, a `INTERVAL_DELAY` variable is used to specify an amount is seconds to wait before making another request. Moreover, a `MAX_RETRY` variable is also used to specify the number of time that the crawler would retry crawling *failed* items before stopping. These variables can be changed in `src.config.py`. When the number of max retry is reached without success, the program will fail.
+- __Timeout Exception__: This usually happens when the crawler makes too many requests to the website in a short amount of time. To handle this exception, a `INTERVAL_DELAY` variable is used to specify an amount is seconds to wait before making another request. Moreover, a `MAX_RETRY` variable is also used to specify the number of time that the crawler would retry crawling *failed* items before stopping. These variables can be changed in `src.config`. When the number of max retry is reached without success, the program will fail.
 
 - Element not found, which can result in `AttributeError` or `IndexError`. These exceptions happen when crawling a single element/feature of an entity (movie, rating, filmography, etc.), and as such would immediately result in no data being returned (`None`), instead of triggering retrial attempts. Exceptions (and the index they happen at) are printed to stdout and to log file.
 
