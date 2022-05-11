@@ -12,7 +12,7 @@ published: true
 
 # Introduction
 
-This is the documentation for the IMDB top 250 crawler. Due to time constraint, the solution built here are limited in some aspect. In the __Discussion__ sections, I raise some concerns regarding my solution (in terms of code and logic), and discuss ways to address these concerns.
+This is the documentation for the [IMDB top 250](https://www.imdb.com/chart/top) crawler. Due to time constraint, the solution built here are limited in some aspect. In the __Discussion__ sections, I raise some concerns regarding my solution (in terms of code and logic), and discuss ways to address these concerns.
 
 # Usage
 
