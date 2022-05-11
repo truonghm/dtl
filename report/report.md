@@ -6,6 +6,7 @@ author:
 output: pdf_document
 documentclass: article
 published: true
+geometry: "left=3cm,right=3cm,top=2cm,bottom=2cm"
 ---
 
 \tableofcontents
