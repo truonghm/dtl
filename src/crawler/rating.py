@@ -17,7 +17,7 @@ from .movie import BulkMovieCrawler, MovieCrawler
 class RatingCrawler(BaseCrawler):
     def __init__(self, url):
         self.url = url
-        print(url)
+        # print(url)
         self.soup = self.get_soup(url)
         self.all_tables = self.soup.select("table")
 

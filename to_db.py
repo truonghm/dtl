@@ -3,8 +3,14 @@ from src.database.models import *
 from src.database.executor import fill_db
 from src.transform.db_input import *
 from src.config import Setting
+from pathlib import Path
+
+
+Path("logs").mkdir(exist_ok=True)
 
 if __name__ == "__main__":
+
+    
 
     bulk_drop(all_tables)
     

@@ -11,10 +11,19 @@ import os
 import time
 from abc import ABC, abstractmethod
 from typing import Union, List
-
+import logging
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.path[0])))
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+file_handler = logging.FileHandler("logs/crawler_log.log")
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter("%(asctime)s : %(levelname)s : %(name)s : %(message)s")
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+logger.addHandler(handler)
 
 from src.transform.db_input import transform_actors, transform_directors, transform_writers, transform_stars
 from src.config import Setting
@@ -163,8 +172,10 @@ class BaseBulkCrawler(BaseCrawler):
                     print(url, index)
                 except Exception as e:
 
-                    print(url, repr(e))
-                    raise e
+                    # print(url, repr(e))
+                    logger.debug(url)
+                    logger.error(repr(e))
+                    # raise e
                     # raise e
 
             retry_count += 1

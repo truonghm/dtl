@@ -14,6 +14,7 @@ import re
 def load_raw_data(file_path: str = None):
     df = pd.read_csv(file_path)
     df['url'] = df['url'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
+    
     if 'genres' in df.columns:
         df['genres'] = df['genres'].replace(np.nan, "")
         # df['genres'] = np.where(df['genres'].str.contains("\["), df['genres'], "[" + df['genres']+ "]")
@@ -185,6 +186,11 @@ def transform_language_lookup(df):
 
 
 def transform_movies(df):
+    movie_list = pd.read_csv("./cache/movie_list.csv", usecols=['urls','movie_names'])
+    movie_list.columns = ['url','new_name']
+    movie_list['url'] = movie_list['url'].str.replace("(?<=\?)(.*)|(\?)|(title)|(ratings)|(name)|(\/)", "", regex=True)
+
+    df['name'] = df.merge(movie_list, how='left', on='url')['new_name']
 
     return df[
         [

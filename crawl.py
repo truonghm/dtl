@@ -16,6 +16,20 @@ import time
 import sys
 import pandas as pd
 import getopt
+import logging
+from pathlib import Path
+
+
+# Create logging folder
+Path("logs").mkdir(exist_ok=True)
+Path("caches").mkdir(exist_ok=True)
+# logger = logging.getLogger(__name__)
+# logger.setLevel(logging.INFO)
+# file_handler = logging.FileHandler("logs/crawler_log.log")
+# formatter = logging.Formatter("%(asctime)s : %(levelname)s : %(name)s : %(message)s")
+# file_handler.setFormatter(formatter)
+# logger.addHandler(file_handler)
+
 
 def get_args():
     page = 'all'

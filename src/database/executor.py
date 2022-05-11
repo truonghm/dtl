@@ -6,6 +6,16 @@ import warnings
 import os
 import sys
 
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+# file_handler = logging.FileHandler("logs/crawler_log.log")
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter("%(asctime)s : %(levelname)s : %(name)s : %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(sys.path[0])))
 
 from src.config import Setting
@@ -17,7 +27,8 @@ class SQLiteDatabase:
             self.connection = sqlite3.connect(Setting.DATABASE)
             self.cursor = self.connection.cursor()
         except Exception as e:
-            print(repr(e))
+            logger.debug("db innit")
+            logger.error(repr(e))
 
     def close(self):
         self.connection.close()
@@ -34,7 +45,9 @@ class SQLiteDatabase:
             return result
         except sqlite3.Error as e:
             (error_msg,) = e.args
-            print("Database Error:", error_msg)
+            # print("Database Error:", error_msg)
+            logger.debug("db execute")
+            logger.debug("Database Error:", error_msg)
             # print(e, query, values)
             return
 
@@ -43,14 +56,16 @@ class SQLiteDatabase:
             self.cursor.execute(f"TRUNCATE TABLE {table_name}")
         except sqlite3.Error as e:
             (error_msg,) = e.args
-            print("Database Error:", error_msg)
+            logger.debug("db truncate")
+            logger.debug("Database Error:", error_msg)
 
     def drop_table(self, table_name):
         try:
             self.cursor.execute(f"DROP TABLE {table_name}")
         except sqlite3.Error as e:
             (error_msg,) = e.args
-            print("Database Error:", error_msg)
+            logger.debug("db drop")
+            logger.debug("Database Error:", error_msg)
 
     def mapping_dtype(self, dtype):
         if dtype.lower() == "int64":
@@ -72,7 +87,9 @@ class SQLiteDatabase:
         convert_to_str: bool = False,
     ):
 
-        print("METHOD OF BULK INSERT IS: ", if_exists)
+        logger.debug("db drop")
+        logger.debug(f"METHOD OF BULK INSERT IS: {if_exists}")
+        # print("METHOD OF BULK INSERT IS: ", if_exists)
 
         new_df = df.copy(deep=True)
 
@@ -102,7 +119,8 @@ class SQLiteDatabase:
                     new_df[col].isin(replace_vals), None, new_df[col]
                 )
         # invalid_dtypes = [k for k,v in new_df.dtypes.items() if v not in ["int64", "float64", "object", "datetime64[ns]"]]
-        print("invalid dtypes:", invalid_dtypes)
+        # print("invalid dtypes:", invalid_dtypes)
+        logger.debug(f"invalid dtypes:{invalid_dtypes}")
 
         if len(invalid_dtypes) > 0:
             if convert_to_str:
@@ -139,7 +157,7 @@ class SQLiteDatabase:
                         self.connection.commit()
                     except sqlite3.Error as e:
                         (error,) = e.args
-                        print("Database Error: ", error)
+                        logger.debug("Database Error:", error)
                         raise (e)
 
                 elif exist_status and if_exists == "replace":
@@ -154,7 +172,7 @@ class SQLiteDatabase:
                         self.connection.commit()
                     except sqlite3.Error as e:
                         (error,) = e.args
-                        print("Database Error: ", error)
+                        logger.debug("Database Error:", error)
                         raise (e)
 
                 if if_exists == "truncate":
@@ -164,7 +182,7 @@ class SQLiteDatabase:
                         self.connection.commit()
                     except sqlite3.Error as e:
                         (error,) = e.args
-                        print("Database Error: ", error)
+                        logger.debug("Database Error:", error)
                         raise (e)
 
             date_cols = []
@@ -190,15 +208,15 @@ class SQLiteDatabase:
             )
 
             df_values = [tuple(x) for x in new_df.values]
-            print(insert_query)
+            # print(insert_query)
 
             try:
                 self.cursor.executemany(insert_query, df_values)
                 self.connection.commit()
-                print(f"Bulk insert done with method {if_exists}")
+                # print(f"Bulk insert done with method {if_exists}")
             except sqlite3.Error as e:
                 (error,) = e.args
-                print("Database Error: ", error)
+                logger.debug("Database Error:", error)
                 raise (e)
         finally:
             # self.pool.release(connection)

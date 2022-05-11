@@ -1,5 +1,4 @@
-movie_features = """
--- SQLite
+movie_features_query = """
 with mov as (
     select 
         movies.*,
@@ -13,28 +12,62 @@ new_cpi as (
     from cpi
     ),
 
+af_filtered as (
+    select distinct a.*
+    from actor_filmo a
+    left join actor_movie b on a.crew_url = b.actor_url
+    left join mov on b.movie_id = mov.movie_id
+    where 1=1
+    and a.movie_id not in (select movie_id from movies)
+    and a.year < mov.release_year
+),
+
 af_adj as (
     select 
         af.*,
         revenue_world * avg_annual_cpi / current_cpi revenue_world_adj
-    from actor_filmo af
+    from af_filtered af
     left join new_cpi on af.year = new_cpi.year
+    where 1=1
+    and is_star = 'True'
+),
+
+df_filtered as (
+    select distinct a.*
+    from director_filmo a
+    left join director_movie b on a.crew_url = b.director_url
+    left join mov on b.movie_id = mov.movie_id
+    where 1=1
+    and a.movie_id not in (select movie_id from movies)
+    and a.year < mov.release_year
 ),
 
 df_adj as (
     select 
         df.*,
         revenue_world * avg_annual_cpi / current_cpi revenue_world_adj
-    from director_filmo df
+    from df_filtered df
     left join new_cpi on df.year = new_cpi.year
+    where 1=1
+),
+
+wf_filtered as (
+    select distinct a.*
+    from writer_filmo a
+    left join writer_movie b on a.crew_url = b.writer_url
+    left join mov on b.movie_id = mov.movie_id
+    where 1=1
+    and a.movie_id not in (select movie_id from movies)
+    and a.year < mov.release_year
 ),
 
 wf_adj as (
     select 
         wf.*,
         revenue_world * avg_annual_cpi / current_cpi revenue_world_adj
-    from writer_filmo wf
+    from wf_filtered wf
     left join new_cpi on wf.year = new_cpi.year
+    where movie_id not in (select movie_id from movies)
 ),
 
 actor_profile as (
@@ -61,11 +94,11 @@ actor_profile as (
         -- avg(case when is_star = 'False' then rating_count end) avg_non_star_actor_movie_rating_count,
         -- avg(case when is_star = 'False' then revenue_world_adj end) avg_non_star_actor_movie_revenue_world_adj,
 
-        sum(case when is_star = 'True' then rating end) sum_star_actor_movie_rating,
-        sum(case when is_star = 'True' then rating_count end) sum_star_actor_movie_rating_count,
-        sum(case when is_star = 'True' then revenue_world_adj end) sum_star_actor_movie_revenue_world_adj,
+        sum(rating) sum_star_actor_movie_rating,
+        sum(rating_count) sum_star_actor_movie_rating_count,
+        sum(revenue_world_adj) sum_star_actor_movie_revenue_world_adj,
 
-        count(case when is_star = 'True' then crew_url end) cnt_star_actor_movie
+        count(crew_url) cnt_star_actor_movie
 
     from af_adj af
     left join actors a on af.crew_url = a.actor_id
@@ -180,6 +213,7 @@ mov_adj as (
         mov.popularity,
         mov.rating,
         tr.rating_count,
+        -- mov.user_review_count,
         mov.critic_review_count,
         mov.runtime,
         mov.release_date,
@@ -187,19 +221,19 @@ mov_adj as (
 
         ma.avg_movie_rating_by_star_actor,
         ma.avg_movie_rating_count_by_star_actor,
-        ma.avg_movie_revenue_world_adj_by_star_actor,
+        ma.avg_movie_revenue_world_adj_by_star_actor / 10E6 avg_movie_revenue_world_adj_by_star_actor,
 
         md.avg_movie_rating_by_director,
         md.avg_movie_rating_count_by_director,
-        md.avg_movie_revenue_world_adj_by_director,
+        md.avg_movie_revenue_world_adj_by_director / 10E6 avg_movie_revenue_world_adj_by_director,
 
         mw.avg_movie_rating_by_writer,
         mw.avg_movie_rating_count_by_writer,
-        mw.avg_movie_revenue_world_adj_by_writer,
+        mw.avg_movie_revenue_world_adj_by_writer / 10E6 avg_movie_revenue_world_adj_by_writer,
 
-        revenue_world * avg_annual_cpi / current_cpi revenue_world_adj,
-        revenue_usa * avg_annual_cpi / current_cpi revenue_usa_adj,
-        budget * avg_annual_cpi / current_cpi budget_adj
+        revenue_world * avg_annual_cpi / current_cpi / 10E6 revenue_world_adj,
+        revenue_usa * avg_annual_cpi / current_cpi / 10E6 revenue_usa_adj,
+        budget * avg_annual_cpi / current_cpi / 10E6 budget_adj
 
     from mov
     left join new_cpi on mov.release_year = new_cpi.year
@@ -210,4 +244,69 @@ mov_adj as (
 )
 
 select * from mov_adj
+"""
+
+genre_query = """
+with mov as (
+    select 
+        movies.*,
+        cast(strftime('%Y', date(opening_date)) as int) opening_year, 
+        cast(strftime('%Y', date(release_date)) as int) release_year 
+    from movies
+),
+
+mov_adj as (
+    select 
+        mov.*,
+        revenue_world * avg_annual_cpi / current_cpi revenue_world_adj,
+        revenue_usa * avg_annual_cpi / current_cpi revenue_usa_adj,
+        revenue_usa_opening * avg_annual_cpi / current_cpi revenue_usa_opening_adj,
+        budget * avg_annual_cpi / current_cpi budget_adj
+    from mov
+    left join new_cpi on mov.release_year = new_cpi.year
+),
+
+base as (select distinct 
+    gm.genre, 
+    m.* 
+from genre_movie gm
+inner join mov_adj m
+on gm.movie_id = m.movie_id
+),
+
+
+
+new_cpi as (
+    select *, (select avg_annual_cpi from cpi where year = 2022) current_cpi
+    from cpi
+    ),
+
+
+total_rating as (
+select 
+    movie_id,
+    sum(vote_count) rating_count
+    from rating_dist
+    group by movie_id
+)
+
+select 
+    genre,
+    movie_rank,
+    base.movie_id,
+    name,
+    popularity,
+    rating,
+    tr.rating_count,
+    critic_review_count,
+    budget_adj / 10E6 budget_adj,
+    revenue_usa_adj / 10E6 revenue_usa_adj,
+    revenue_usa_opening_adj / 10E6 revenue_usa_opening_adj,
+    revenue_world_adj / 10E6 revenue_world_adj,
+    runtime,
+    opening_date,
+    release_date
+from base
+left join total_rating tr
+on base.movie_id =tr.movie_id
 """
