@@ -8,17 +8,11 @@ documentclass: article
 published: true
 ---
 
-\pagebreak
-
 \tableofcontents
-
-\listoftables
-
-\pagebreak
 
 # Introduction
 
-TBD.
+This is the documentation for the IMDB top 250 crawler. Due to time constraint, the solution built here are limited in some aspect. In the __Discussion__ sections, I raise some concerns regarding my solution (in terms of code and logic), and discuss ways to address these concerns.
 
 # Usage
 
@@ -96,6 +90,21 @@ python crawl.py --page=movie --stop_at=5
 
 ### Code logic
 
+#### Crawling pipeline
+
+
+![Crawling pipeline](images/crawling_pipeline.png){ height=340px }
+
+
+The crawler can be broken down into phases and subprocesses, as illustrated above.
+
+- Phase 1: Get the URLs of all 250 movies from the IMDB top 250 page.
+- Phase 2: Using the URL of each movie, get the detailed information in its page. Some extra information, such a        s detailed rating distribution requires going further into another level of sub-URL to crawl. Filmographies of actors, directors and writers are also scraped, but only the top 50 movies with the most votes (which is the first page of the search result). 
+- Phase 3: Get CPI data, which will be used later to adjust for inflation for dollar values.
+
+Each subprocess use the output (cache) from the previous one (when linked with an arrow labeled with "cache") to crawl data.
+
+
 #### Base crawler classes
 
 The crawler use 2 abstract base classes: `BaseCrawler` and `BaseBulkCrawler`. All other classes inherit from these two.
@@ -117,7 +126,10 @@ class BaseCrawler(ABC):
     def crawl(self) -> pd.DataFrame:
         pass
 
-    def save_cache(self, crawler_output, file_name: Union[List, str] = None):
+    def save_cache(
+        self, crawler_output, 
+        file_name: Union[List, str] = None
+    ):
         ...
 ```
 
@@ -130,15 +142,25 @@ The `BaseBulkCrawler` class contains the following default methods:
 ```python
 class BaseBulkCrawler(BaseCrawler):
     @abstractmethod
-    def __init__(self, url, load_from_cache: bool = True, stop_at: int = None):
+    def __init__(
+        self, url, 
+        load_from_cache: bool = True, 
+        stop_at: int = None
+    ):
         # raise NotImplementedError
         self.stop_at = stop_at
 
-    def bulk_craw(self, CrawlerObject, write_to_cache: bool = True, file_name: str = None):
+    def bulk_craw(
+        self, CrawlerObject, 
+        write_to_cache: bool = True, 
+        file_name: str = None
+    ):
         ....
 
     @abstractmethod
-    def crawl(self, crawler, index, status: bool = True):
+    def crawl(self, crawler, index, 
+        status: bool = True
+    ):
         pass
 ```
 
@@ -146,23 +168,10 @@ Classes inherited from the `BaseBulkCrawler` class will have the `bulk_craw()` m
 
 Note that the `BaseBulkCrawler` inherits from the `BaseCrawler` class, which means it will have the `save_cache` method.
 
-#### Crawling pipeline
-
-The crawler can be broken down into phases and subprocesses, as illustrated below:
-
-![Crawling pipeline](images/crawling_pipeline.png){ height=340px }
-
-- Phase 1: Get the URLs of all 250 movies from the IMDB top 250 page.
-- Phase 2: Using the URL of each movie, get the detailed information in its page. Some extra information, such as detailed rating distribution requires going further into another level of sub-URL to crawl. Filmographies of actors, directors and writers are also scraped, but only the top 50 movies with the most votes (which is the first page of the search result). 
-- Phase 3: Get CPI data, which will be used later to adjust for inflation for dollar values.
-Each subprocess use the output (cache) from the previous one (when linked with an arrow labeled with "cache") to crawl data.
-
 
 #### Caching
 
-Data crawled from IMDB are saved in the "./cache" folder. The folder is created automatically if not exists. 
-
-Subsequent crawling processes use caches from the previous process. If the cache does not exists, the process will attempt to trigger its immediate prior process.
+Data crawled from IMDB are saved in the "./cache" folder. The folder is created automatically if not exists. Subsequent crawling processes use caches from the previous process. If the cache does not exists, the process will attempt to trigger its immediate prior process.
 
 Caches are also used as source to create database (See __Database__ section below).
 
@@ -182,7 +191,7 @@ A small database is implemented using SQLite, while the schemas is managed with 
 
 The schema of the database can be visualized as below:
 
-![Crawling pipeline](images/db_diagram.png){ height=340px }
+![Database schema](images/db_diagram.png){ height=340px }
 
 ### Running from CLI
 
@@ -193,3 +202,14 @@ python to_db.py
 ```
 
 This script automatically drop all own tables from the database (and create the database if not exists), use the schemas define in `src.database.models` and insert data from cache.
+
+# Discussion
+
+Due to time constraint, the crawler is still lacking in some of the following aspects:
+
+- __There are some potentially useful data that has not yet been crawled__, such as the dates of birth of actors, directors and writers. This can be used to calculate the age at which that person was involved with a particular movie. Some other information includes: 
+    - Awards (winners and nominations), 
+    - More pages in the filmography search results, 
+    - Agencies and production companies related to a movie.
+
+- __The crawler does not insert to database immediately after finishing crawling data__. I separate these two processes for ease of testing.
